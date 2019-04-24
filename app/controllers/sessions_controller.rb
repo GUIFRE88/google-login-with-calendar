@@ -2,20 +2,21 @@ class SessionsController < ApplicationController
 
   def google_login
     # Get access tokens from the google server
-    access_token = request.env["omniauth.auth"]
-    user = User.from_omniauth(access_token)
+    auth = request.env["omniauth.auth"]
+    user = User.from_omniauth(auth)
     
     log_in(user)
 
     token = user.tokens.find_or_initialize_by(provider: 'google')
 
-    # Access_token is used to authenticate request made from the rails application to the google server
-    token.access_token = access_token.credentials.token
-    token.expires_at = access_token.credentials.expires_at
+    # Access token is used to authenticate requests
+    token.auth = auth.credentials.token
+    token.expires_at = auth.credentials.expires_at
 
-    # Refresh_token to request new access_token
+    # Refresh_token to request new access token
     # Note: Refresh_token is only sent once during the first request
-    refresh_token = access_token.credentials.refresh_token
+    # After the second login etc this won't be returned
+    refresh_token = auth.credentials.refresh_token
     token.refresh_token = refresh_token if refresh_token.present?
     
     # save token
